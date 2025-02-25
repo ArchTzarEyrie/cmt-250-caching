@@ -54,9 +54,9 @@ async function handleFetch(event) {
 
     try {
 
-        const responseFromNetwork = await fetch(request.clone());
         const cache = await caches.open(versionToken)
-        cache.put(request, responseFromNetwork.clone());
+        await cache.add(request.clone());
+        const responseFromNetwork = await cache.match(request);
         console.log('[CACHES] Responding from network');
         return responseFromNetwork;
 
