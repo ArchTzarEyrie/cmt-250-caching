@@ -34,11 +34,5 @@ async function handleFetch(event) {
     }
 }
 self.addEventListener('fetch', async (event) => {
-    console.log(event.request.url);
-    if (event.request.url.includes('gallery') || event.request.referrer.includes("Cached")) {
-        event.respondWith(handleFetch(event));
-    } else {
-        console.log('Responding without checking cache');
-    }
-    
+    event.respondWith(handleFetch(event));
 });
