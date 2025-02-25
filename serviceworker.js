@@ -1,5 +1,5 @@
 async function deleteAllCaches() {
-    console.log('Deleting all caches');
+    console.log('[CACHES] Deleting all caches');
     const cacheNames = await caches.keys();
     cacheNames.forEach(async cacheName => {
         await caches.delete(cacheName);
@@ -8,31 +8,47 @@ async function deleteAllCaches() {
 
 self.addEventListener('install', async () => {
     await deleteAllCaches();
-    console.log('Service worker installed');
+    await caches.open('v1');
+    console.log('[LIFECYCLE] Service worker installed');
     self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-    console.log('Service worker activated');
+    console.log('[LIFECYCLE] Service worker activated');
     event.waitUntil(clients.claim());
 });
 
 async function handleFetch(event) {
     const request = event.request;
-    console.log(`Request URL" ${request.url}`)
+    console.log(`[CACHES] Request URL ${request.url}`)
     const urlTokens = request.url.split('/');
     const versionToken = urlTokens[3];
-    console.log(`URL Version: ${versionToken}`);
+    console.log(`[CACHES] URL Version: ${versionToken}`);
+    let replacedUrl;
 
     const isCurrentVersion = await caches.has(versionToken);
     if (!isCurrentVersion) {
-        await deleteAllCaches();
+        console.log("[CACHES] Cache version discrepency detected")
+        const cacheKeys = await caches.keys();
+        const currentCacheName = cacheKeys[0];
+        const currentVersion = Number(currentCacheName[1]);
+        console.log(`[CACHES] Current version ${currentVersion}`);
+        const newVersion = Number(versionToken[1]);
+        console.log(`[CACHES] New version: ${newVersion}`);
+        if (newVersion > currentVersion) {
+            await deleteAllCaches();
+        } else if (newVersion < currentVersion) {
+            console.log('[CACHES] Detected different version is outdated, redirecting to updated request');
+            replacedUrl = request.url.replace(/v./, currentCacheName);
+            console.log(`[CACHES] Replaced URL: ${replacedUrl}`);
+        }
     }
 
-    const responseFromCache = await caches.match(request);
+    const valueToCheck = replacedUrl ? replacedUrl : request;
+    const responseFromCache = await caches.match(valueToCheck);
 
     if (responseFromCache) {
-        console.log('Responding from cache');
+        console.log('[CACHES] Responding from cache');
         return responseFromCache;
     }
 
@@ -41,7 +57,7 @@ async function handleFetch(event) {
         const responseFromNetwork = await fetch(request.clone());
         const cache = await caches.open(versionToken)
         cache.put(request, responseFromNetwork.clone());
-        console.log('Responding from network');
+        console.log('[CACHES] Responding from network');
         return responseFromNetwork;
 
     } catch (error) {
