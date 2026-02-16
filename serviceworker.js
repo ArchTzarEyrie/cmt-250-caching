@@ -1,9 +1,7 @@
-self.addEventListener('install', async () => {
+self.addEventListener('install', () => {
     console.log('[LIFECYCLE] Service worker installed');
-    self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', () => {
     console.log('[LIFECYCLE] Service worker activated');
-    event.waitUntil(clients.claim());
 });
