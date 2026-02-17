@@ -1,3 +1,11 @@
+/*
+This file contains a stretch goal of funtionality
+where we only update cache version if the new endpoint
+is newer (has a higher version number) AND if a resource
+is requested from an old endpoint, we edit the endpoint to
+have the most up to date version number
+*/
+
 async function deleteAllCaches() {
     console.log('[CACHES] Deleting all caches');
     const cacheNames = await caches.keys();
@@ -9,13 +17,12 @@ async function deleteAllCaches() {
 self.addEventListener('install', async () => {
     await deleteAllCaches();
     await caches.open('v1');
+    console.log('[CACHES]: Cache v1 opened');
     console.log('[LIFECYCLE] Service worker installed');
-    self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
     console.log('[LIFECYCLE] Service worker activated');
-    event.waitUntil(clients.claim());
 });
 
 async function handleFetch(event) {
